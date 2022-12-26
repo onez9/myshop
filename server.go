@@ -1,8 +1,9 @@
 package main
 
 import (
-	// "encoding/json"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -24,8 +25,34 @@ type Product struct {
 	ImgPath     string `json:"imgpath"`
 }
 
+var connStr string = `
+user=postgres
+password=123
+host=localhost
+dbname=postgres`
+
+var db, err = sql.Open("postgres", connStr)
+
 // var products = []Product
 var products []Product
+
+func sendDataToDBpostgres() {
+
+	stmt, err := db.Prepare(`INSERT INTO products(name_product,description_product,price,imgpath)Values($1,$2,$3,$4)`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for i, item := range products {
+		fmt.Println(item, i)
+
+		res, err := stmt.Exec(item.Name, item.Description, item.Price, item.ImgPath)
+		rowCnt, err := res.RowsAffected()
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("Добавлено %d\n", rowCnt)
+	}
+}
 
 func saveProductsToJSON() {
 	file, err := os.Create("data.json")
@@ -122,46 +149,67 @@ func fillProductsToAqrray() {
 	})
 }
 
-func main() {
-	e := echo.New()
-	products = make([]Product, 0)
-	// fillProductsToArray()
-	// saveProductsToJSON()
-	loadProductsFromJSON()
-	connStr := `
-	user=postgres
-	password=123
-	host=localhost
-	dbname=postgres`
+func encrtyptPasswords(password string) string {
+	h := sha256.New()
+	h.Write([]byte(password))
+	b := h.Sum(nil)
+	// fmt.Println(b)
+	str := base64.StdEncoding.EncodeToString(b)
+	return str
+}
 
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
-	err = db.Ping()
+func loadFromDB() {
 
-	var price string
+	var price int
 	var name string
-	var customer_id string
-	rows, err := db.Query(`select name,price,customer_id from products;`)
+	var description string
+	var imgpath string
+
+	// rows, err := db.Query()
+	stmt, err := db.Prepare(`select name_product,description_product,price,imgpath from products`)
 	if err != nil {
 		panic(err)
 	}
 
-	defer rows.Close() // закрытие соединения
+	defer stmt.Close() // закрытие соединения
+	rows, err := stmt.Query()
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
 
 	for rows.Next() {
-		err := rows.Scan(&name, &price, &customer_id)
+		err := rows.Scan(&name, &description, &price, &imgpath)
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println(name, price, customer_id)
+
+		products = append(products, Product{
+			Name:        name,
+			Description: description,
+			Price:       price,
+			ImgPath:     imgpath,
+		})
+		// fmt.Println(name, description, price, imgpath)
 	}
 	err = rows.Err()
 	if err != nil {
 		panic(err)
 	}
+}
+
+func main() {
+
+	fmt.Println(anime1.first + anime1.second)
+	defer db.Close()
+
+	e := echo.New()
+	products = make([]Product, 0)
+	// fillProductsToArray()
+	// saveProductsToJSON()
+	// loadProductsFromJSON()
+	// sendDataToDBpostgres()
+	loadFromDB()
 
 	// e := echo.New()
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
@@ -180,24 +228,47 @@ func main() {
 
 	// Маршрут для products
 	e.GET("/getproducts", func(c echo.Context) error {
-		page, err := strconv.Atoi(c.QueryParam("p"))
+
+		stmt, err := db.Prepare(`select passw from users where email=$1`)
 		if err != nil {
 			log.Fatal(err)
 		}
-		limit, err := strconv.Atoi(c.QueryParam("limit"))
+		// defer stmt.Close()
+
+		var hash_from_db string
+		sess, _ := session.Get("session", c)
+		email, err1 := sess.Values["email"]
+
+		fmt.Println(email, err1)
+		err = stmt.QueryRow(email).Scan(&hash_from_db)
 		if err != nil {
-			log.Fatal(err)
-		}
+			if err == sql.ErrNoRows {
+				fmt.Println("Тут ничего нет!")
+			} else {
+				log.Fatal(err)
+			}
+			return c.JSON(http.StatusOK, products[0:0])
+		} else {
 
-		fromIndex := page * limit     // начальный индекс товара
-		toIndex := page*limit + limit // конечный индекс товара
-		if toIndex > len(products) {
-			toIndex = len(products)
-		}
-		productsPage := products[fromIndex:toIndex]
+			page, err := strconv.Atoi(c.QueryParam("p"))
+			if err != nil {
+				log.Fatal(err)
+			}
+			limit, err := strconv.Atoi(c.QueryParam("limit"))
+			if err != nil {
+				log.Fatal(err)
+			}
 
-		fmt.Println(page, limit)
-		return c.JSON(http.StatusOK, productsPage)
+			fromIndex := page * limit     // начальный индекс товара
+			toIndex := page*limit + limit // конечный индекс товара
+			if toIndex > len(products) {
+				toIndex = len(products)
+			}
+			productsPage := products[fromIndex:toIndex]
+
+			fmt.Println(page, limit)
+			return c.JSON(http.StatusOK, productsPage)
+		}
 	})
 
 	// количество товаров
@@ -232,8 +303,45 @@ func main() {
 		})
 	})
 
-	// Пример обработчика запроса POST с получением параметров
-	e.POST("/testpost", func(c echo.Context) error {
+	e.POST("/addUser", func(c echo.Context) error {
+		json_map := make(map[string]interface{})
+		err := json.NewDecoder(c.Request().Body).Decode(&json_map)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(json_map)
+
+		if err != nil {
+			panic(err)
+		}
+
+		err = db.Ping()
+
+		stmt, err := db.Prepare(`INSERT INTO users(firstname,lastname,email,passw)Values($1,$2,$3,$4)`)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		firstname := json_map["firstname"].(string)
+		lastname := json_map["lastname"].(string)
+		email := json_map["email"].(string)
+		password := json_map["password"].(string)
+
+		password = encrtyptPasswords(password)
+		fmt.Println("Длина хэша: ", len(password))
+		res, err := stmt.Exec(firstname, lastname, email, password)
+		rowCnt, err := res.RowsAffected()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Printf("Добавлено %d\n", rowCnt)
+
+		return c.JSON(http.StatusOK, "OK")
+	})
+
+	e.POST("/sendProduct", func(c echo.Context) error {
 		fmt.Println(c)
 		json_map := make(map[string]interface{})
 		err := json.NewDecoder(c.Request().Body).Decode(&json_map)
@@ -243,11 +351,91 @@ func main() {
 
 		fmt.Println(json_map)
 		name := json_map["name"].(string)
-		v := map[string]interface{}{
-			"response": "Добрый день, " + name,
+		description := json_map["description"].(string)
+		price := json_map["price"].(float64)
+
+		stmt, err := db.Prepare(`INSERT INTO products(name_product,description_product,price,imgpath)Values($1,$2,$3,$4)`)
+		if err != nil {
+			log.Fatal(err)
 		}
-		fmt.Println(v)
-		return c.JSON(http.StatusOK, v)
+		var imgpath string = "assets/img/1321.jpg" // тут нужно изменить путь, потому что в бд это поле должно быть уникальным
+		res, err := stmt.Exec(name, description, price, imgpath)
+		rowCnt, err := res.RowsAffected()
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("Добавлено %d\n", rowCnt)
+
+		fmt.Printf("name: %v\ndescription: %v\nprice: %v\n", name, description, price)
+		products = append(products, Product{
+			Name:        name,
+			Description: description,
+			Price:       int(price),
+			ImgPath:     "assets/img/11.jpg",
+		})
+
+		return c.JSON(http.StatusOK, "OK")
+
+	})
+	// Пример обработчика запроса POST с получением параметров
+	e.POST("/authentication", func(c echo.Context) error {
+		sess, _ := session.Get("session", c)
+		sess.Values["email"] = "no"
+		fmt.Println(c)
+		json_map := make(map[string]interface{})
+		err := json.NewDecoder(c.Request().Body).Decode(&json_map)
+		if err != nil {
+			return err
+		}
+		email := json_map["email"].(string)
+		password := json_map["password"].(string)
+		hash := encrtyptPasswords(password)
+		fmt.Println(email)
+		fmt.Println(hash)
+
+		stmt, err := db.Prepare(`select passw from users where email=$1`)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// defer stmt.Close()
+
+		var hash_from_db string
+		err = stmt.QueryRow(email).Scan(&hash_from_db)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				fmt.Println("Тут ничего нет!")
+			} else {
+				log.Fatal(err)
+			}
+		}
+		/*
+			row1 := stmt.QueryRow(email)
+
+			err = row1.Scan(&hash_from_db)
+			if err = row1.Err(); err != nil {
+				log.Fatal(err)
+			}
+		*/
+		fmt.Println(hash_from_db)
+
+		if hash_from_db == hash {
+			fmt.Println("Авторизация успешно пройдена!")
+
+			fmt.Println(sess)
+			sess.Options = &sessions.Options{
+				Path:     "/",
+				MaxAge:   86400 * 7,
+				HttpOnly: true,
+			}
+			sess.Values["email"] = email
+			sess.Values["password"] = password
+			fmt.Println(sess.Values)
+			sess.Save(c.Request(), c.Response())
+
+		} else {
+			fmt.Println("Пошёл нахуй!")
+		}
+		return c.JSON(http.StatusOK, "OK")
 	})
 
 	// Основной обработчик GET / - отдает файл index.html

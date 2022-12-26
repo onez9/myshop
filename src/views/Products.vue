@@ -23,14 +23,14 @@
         <label for="description">Description: {{ description_product }}</label>
         <input v-model="description_product" type="text" id="description" class="form-control" required>
         <label for="price">Price:</label>
-        <input type="number" min="100" max="1000" id="price" class="form-control mb-1" value="101" required>
+        <input v-model.number="price_product" type="number" min="100" max="1000" id="price" class="form-control mb-1" required>
         <label for="Avatar">Avatar:</label>
         <input type="file" id="Avatar" class="form-control mb-1">
         <!-- <label for="name">name</label> -->
         <!-- <input type="text" id="name" class="form-control"> -->
 
         <div class="d-flex">
-          <button @click="addProduct(name_product, description_product)" class="btn btn-success me-1">Добавить</button>
+          <button @click="addProduct(name_product, description_product, price_product)" class="btn btn-success me-1">Добавить</button>
           <button @click="hide=false" class="btn btn-danger">Отмена</button>
         </div>
       </div>
@@ -160,9 +160,9 @@ export default {
         }) 
 
       })
-
-      const jsonResult = await response.json();
-      console.log(jsonResult);      
+      await this.getProducts()
+      await this.getProductsCount()
+      this.elements = await response.json();
     },
 
     async updateProduct() {

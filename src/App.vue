@@ -1,5 +1,6 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
+
 </script>
 
 <template>
@@ -32,12 +33,11 @@ import { RouterLink, RouterView } from 'vue-router'
           </ul>
 
           <div class="d-flex">
-            <div>
-              <!-- <a class="nav-link" href="about.html"><i class="bi-file-earmark-person"></i> О нас</a> -->
+            <!-- <div>
+              <a class="nav-link" href="about.html"><i class="bi-file-earmark-person"></i> О нас</a> 
               <router-link class="nav-link" to="/auth"><i class="bi-box-arrow-in-left"></i> Войти</router-link>
-            </div>
-            <div>
-              <!-- <a class="nav-link" href="about.html"><i class="bi-file-earmark-person"></i> О нас</a> -->
+            </div> -->
+            <div> 
               <router-link class="nav-link" to="/reg"><i class="bi-box-arrow-in-right"></i> Выйти</router-link>
             </div>
           </div>

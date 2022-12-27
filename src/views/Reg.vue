@@ -14,18 +14,20 @@
     <div class="container">
       <div class="row">
         <div class="col-sm-4">
-          <label for="firstname">Имя:</label>
-          <input v-model="firstname" type="text" id="firstname" class="form-control" required>
-          <label for="lastname">Фамилия:</label>
-          <input v-model="lastname" type="text" id="lastname" class="form-control" required>
-          <label for="email">Email:</label>
-          <input v-model="email" type="email" id="email" class="form-control" required>
-          <label for="pass1">Введите пароль:</label>
-          <input v-model="password" type="password" id="pass1" class="form-control" required>
-          <label for="pass2">Повторите пароль:</label>
-          <input type="password" id="pass2" class="form-control" required>
-          <button @click="addUser(firstname,lastname,email, password)" class="btn btn-success mt-1 me-1">Создать</button>
-          <button class="btn btn-success mt-1">Авторизация</button>
+          <form action="/addUser" method="post" enctype="multipart/form-data">
+            <label for="firstname">Имя:</label>
+            <input name="firstname" type="text" id="firstname" class="form-control" required>
+            <label for="lastname">Фамилия:</label>
+            <input name="lastname" type="text" id="lastname" class="form-control" required>
+            <label for="email">Email:</label>
+            <input name="email" type="email" id="email" class="form-control" required>
+            <label for="pass1">Введите пароль: {{pass1}}</label>
+            <input v-model="pass1" name="password1" type="password" id="pass1" class="form-control" required>
+            <label for="pass2">Повторите пароль: {{pass2}}</label>
+            <input v-model="pass2" name="password2" type="password" id="pass2" class="form-control" required>
+            <button :class="{'btn btn-success mt-1 me-1': true, 'disabled': (pass1!=pass2)}" type="submit">Создать</button>
+            <button class="btn btn-success mt-1">Авторизация</button>
+          </form>
 
         </div>
       </div>
@@ -44,6 +46,8 @@ export default {
       lastname: "",
       email: "",
       password: "",
+      pass1: "",
+      pass2: "",
     }
   },
   methods: {

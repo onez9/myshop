@@ -2,39 +2,43 @@
 </script>
 
 <template>
-  <main class="container" id="elements">
-    <h1>Моя компания</h1>
-    <p>Тут представлены наши основные товары</p>
-
-
-
-    <nav aria-label="Page navigation example">
-      <ul class="pagination">
-        <li v-if="currentPage>0" class="page-item"><a class="page-link" href="#" @click="changePage(currentPage-1)">Пред</a></li>
-        <li :class="{'page-item': true, 'active': (page-1==currentPage)}" v-for="page in totalpages" :key="page">
-          <a class="page-link" @click="changePage(page-1)" href="#">{{ page }}</a>
-        </li>
-        <li v-if="currentPage<totalpages-1" class="page-item"><a class="page-link" href="#" @click="changePage(currentPage+1)">След</a></li>
-      </ul>
-      <button v-if="!hide" @click="hide=true" class="btn btn-success">Добавить товар</button>
-      <div v-if="hide">
-        <label for="name">Name: {{ name_product }}</label>
-        <input v-model="name_product" type="text" id="name" class="form-control" required>
-        <label for="description">Description: {{ description_product }}</label>
-        <input v-model="description_product" type="text" id="description" class="form-control" required>
-        <label for="price">Price:</label>
-        <input v-model.number="price_product" type="number" min="100" max="1000" id="price" class="form-control mb-1" required>
-        <label for="Avatar">Avatar:</label>
-        <input type="file" id="Avatar" class="form-control mb-1">
+  <div class="container" id="elements">
+    <!-- <p>Список товаров</p> -->
+  
+    <div class="mt-3 d-flex justify-content-center">
+      <nav aria-label="Page navigation mt-1 example">
+        <ul class="pagination">
+          <li v-if="currentPage>0" class="page-item"><a class="page-link" href="#" @click="changePage(currentPage-1)">Пред</a></li>
+          <li :class="{'page-item': true, 'active': (page-1==currentPage)}" v-for="page in totalpages" :key="page">
+            <a class="page-link" @click="changePage(page-1)" href="#">{{ page }}</a>
+          </li>
+          <li v-if="currentPage<totalpages-1" class="page-item"><a class="page-link" href="#" @click="changePage(currentPage+1)">След</a></li>
+        </ul>
+      </nav>
+    </div>
+    
+    <button v-if="!hide" @click="hide=true" class="btn btn-info">Добавить товар</button>
+    <div v-if="hide">
+      <!-- <form action="/sendProduct" method="POST" enctype="multipart/form-data"> -->
+      <form method="POST">
+        <label for="name">Название: {{ name_product }}</label>
+        <input name="name" v-model="name_product" type="text" id="name" class="form-control" required>
+        <label for="description">Описание: {{ description_product }}</label>
+        <input name="description" v-model="description_product" type="text" id="description" class="form-control" required>
+        <label for="price">Цена:</label>
+        <input name="price" v-model.number="price_product" type="number" min="100" max="1000" id="price" class="form-control mb-1" required>
+        <label for="Avatar">Аватар:</label>
+        <input name="file" type="file" id="Avatar" class="form-control mb-1" required>
+        <!-- <input name="file" ref="file" type="file" id="Avatar" class="form-control mb-1" required> -->
         <!-- <label for="name">name</label> -->
         <!-- <input type="text" id="name" class="form-control"> -->
-
-        <div class="d-flex">
-          <button @click="addProduct(name_product, description_product, price_product)" class="btn btn-success me-1">Добавить</button>
-          <button @click="hide=false" class="btn btn-danger">Отмена</button>
+        <div class="d-flex mt-3 mb-3">
+          <button @click="sendProduct" type="button" class="btn btn-info me-1">Добавить</button>
+          <button @click="canceling" class="btn btn-warning me-1">Отмена</button>
+          <button @click="ending" class="btn btn-danger">Завершить</button>
         </div>
-      </div>
-    </nav>
+      </form>
+    </div>
     <!-- {{currentPage}} -->
     <table class="table table-striped table-hover">
       <thead>
@@ -46,10 +50,6 @@
         </tr>
       </thead>
       <tbody>
-        
-        
-       
-
         <tr @click="activeElem = element" v-for="(element, index) in elements" :key="index">
           <div class="card shadow rounded my-1">
             <div class="card-body">
@@ -57,44 +57,35 @@
                 <div class="col-md-2">
                   <!--Здесь будет фото товара-->
                   <img v-bind:src="element.imgpath" class="product-image">
-                
+    
                 </div>
                 <div class="col-md-10">
-
                   <div v-if="!element.editmode" class="product-name">{{ element.name }}</div>
                   <label v-else>Имя товара</label>
                   <input class="form-control mb-1" type="text" v-if="element.editmode" v-model="element.name">
-
                   <div v-if="!element.editmode" class="product-description">{{ element.description }}</div>
                   <label v-else>Описание товара</label>
                   <input class="form-control mb-1" type="text" v-if="element.editmode" v-model="element.description">
-
-
                   <label v-if="element.editmode">Цена</label>
                   <input type="number" class="form-control mb-1" v-model="element.price" v-if="element.editmode">
                   <div class="flex-grow-1"></div>
                   <div class="d-flex justify-content-end">
-                    
-                    
+    
+    
                     <div v-show="!element.editmode" class="product-price">Цена: <strong>{{ element.price }}</strong></div>
-
-                    
+    
                     <button v-show="!element.editmode" @click="element.editmode=true" class="btn btn-success me-1" title="Выполнить какие-нибудь изменения">
                       <i class="bi bi-pen"></i> <span class="d-none d-md-inline">Редактировать</span>
                     </button>
                     <button v-show="element.editmode" @click="element.editmode=false" class="btn btn-info me-1" title="Выполнить какие-нибудь изменения">
                       <i class="bi bi-pen"></i> <span class="d-none d-md-inline">Сохранить</span>
                     </button>
-
-
-
                     <button @click="delProduct(element)" class="btn btn-danger me-1" title="Удалить">
                       <i class="bi bi-x-circle"></i> <span class="d-none d-md-inline">Удалить</span>
                     </button>
                     <button @click="t1" class="btn btn-warning" title="В корзину">
                       <i class="bi bi-cart"></i> <span class="d-none d-md-inline">В корзину</span>
                     </button>
-
                   </div>
                 </div>
               </div>
@@ -103,19 +94,11 @@
         </tr>
       </tbody>
     </table>
-
-   
-
-
-
-
-
-  </main>
-
+  </div>
 </template>
 
 <script>
-const produtcsPerPage = 3
+const productsPerPage = 3
 // document.getElementById("b1").addEventListener('click', () => alert("Товар добавлен в корзину"), false)
 // document.getElementById("b2").addEventListener('click', () => alert("Товар добавлен в корзину"), false)
 // document.getElementById("b3").addEventListener('click', () => alert("Товар добавлен в корзину"), false)
@@ -131,6 +114,7 @@ export default {
       name_product: "",
       price_product: 0,
       description_product: "",
+      file: "",
       
     }
   },
@@ -145,7 +129,28 @@ export default {
     t1() {
       alert('Товар добавлен в корзину')
     },
+    async uploadFile(e) {
+      const files = e.target.files
+      const data = new FormData()
+      data.append('file', files[0])
+    
+      const response = await fetch('/t2', {
+        method: 'POST',
+        body: data
+      })
 
+
+      // .then(response => response.json())
+      // .then(data => {
+      //   console.log(data)
+      // })
+      // .catch(error => {
+      //   console.error(error)
+      // })
+      console.log(response.json())
+
+
+    },
     async addProduct(name, description, price) {
       // alert(name + description)
       const response = await fetch('/sendProduct', {
@@ -160,25 +165,84 @@ export default {
         }) 
 
       })
+      this.price_product=100
+      this.name_product=""
+      this.description_product=""
+
+      this.elements = await response.json();
       await this.getProducts()
       await this.getProductsCount()
-      this.elements = await response.json();
-    },
 
+    },
+    async sendProduct() {
+
+      let formData = new FormData()
+
+      // const files = e.target.files // работает с @change=""
+      // const data = new FormData()
+      let input = document.querySelector('input[type="file"]')
+      formData.append('file', input.files[0])
+      // this.file = this.$refs.file.files[0]
+      // formData.append('file', this.file)
+      // formData.append('file', files[0])
+      
+      formData.append('name', this.name_product)
+      formData.append('description', this.description_product)
+      formData.append('price', this.price_product)
+
+
+      // const data = new URLSearchParams();
+      // for (const pair of formData) {
+      //     data.append(pair[0], pair[1]);
+          
+      // }
+      
+      
+      const response = await fetch(`/sendProduct?p=${this.currentPage}&limit=${productsPerPage}`, {
+        method: 'POST',
+        // headers: {
+        //   'Content-Type': 'application/x-www-form-urlencoded'
+        // },
+        body: formData
+
+      })
+      // let product = document.getElementsByName("name").text
+      // let description = document.getElementsByName("description").Values
+      // let price = document.getElementsByName("price").Value
+
+      this.elements = await response.json();
+      await this.getProductsCount()
+
+
+      // this.price_product=100
+      // this.name_product=""
+      // this.description_product=""
+      // document.querySelector('input[type=file]').value = '';
+      await this.canceling()
+
+      // await this.getProducts()
+      // await this.getProductsCount()
+      // console.log(product)
+      // console.log(description)
+      // console.log(price)
+    },
     async updateProduct() {
 
     },
-
     async delProduct(element) {
       this.elements.splice(this.elements.indexOf(element), 1)
       // alert(this.elements.indexOf(element))
-    },
+      const response = await fetch(`/delrec?name=${element.name}&p=${this.currentPage}&limit=${productsPerPage}`, {
+        method: 'POST',
 
+      })
+      this.elements = await response.json();
+      await this.getProductsCount()
+    },
     async changePage(page) {
       this.currentPage = page
       await this.getProducts()
     },
-
     async testPost() {
       // Отправляем запрос типа POST
       const response = await fetch('/testpost', {
@@ -195,7 +259,6 @@ export default {
 
       console.log(jsonResult);
     },
-
     async testGet() {
       // Отправляем запрос типа GET
       const response = await fetch(`/testget?name=Василий`, {
@@ -206,25 +269,35 @@ export default {
 
       console.log(elements);
     },
-
     async getProductsCount() {
       const response = await fetch('getproductscount', {
         method: 'GET'
       })
       const productscount = parseInt(await response.text(), 10)
-      this.totalpages = Math.ceil(productscount / produtcsPerPage)
+      this.totalpages = Math.ceil(productscount / productsPerPage)
 
     },
-
     async getProducts() {
-      const response = await fetch(`/getproducts?p=${this.currentPage}&limit=${produtcsPerPage}`, {
+      const response = await fetch(`/getproducts?p=${this.currentPage}&limit=${productsPerPage}`, {
         method: 'GET'
       })
 
       this.elements = await response.json();
       // console.log(elements);
+    },
+    async ending() {
+      this.price_product=100
+      this.name_product=""
+      this.description_product=""
+      document.querySelector('input[type=file]').value = "";
+      this.hide=false
+    },
+    async canceling(){
+      this.price_product=100
+      this.name_product=""
+      this.description_product=""
+      document.querySelector('input[type=file]').value = "";
     }
-
 
 
   }

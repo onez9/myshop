@@ -17,7 +17,7 @@
       </nav>
     </div>
     
-    <button v-if="!hide" @click="hide=true" class="btn btn-info">Добавить товар</button>
+    <button v-if="!hide" @click="hide=true" class="btn btn-info"><i class="bi-plus-square"></i> Новый товар</button>
     <div v-if="hide">
       <!-- <form action="/sendProduct" method="POST" enctype="multipart/form-data"> -->
       <form method="POST">
@@ -33,9 +33,9 @@
         <!-- <label for="name">name</label> -->
         <!-- <input type="text" id="name" class="form-control"> -->
         <div class="d-flex mt-3 mb-3">
-          <button @click="sendProduct" type="button" class="btn btn-info me-1">Добавить</button>
-          <button @click="canceling" class="btn btn-warning me-1">Отмена</button>
-          <button @click="ending" class="btn btn-danger">Завершить</button>
+          <button @click="sendProduct" type="button" class="btn btn-success me-1"><i class="bi-plus-square"></i> Добавить</button>
+          <button @click="canceling" class="btn btn-warning me-1"><i class="bi-x-square"></i> Отмена</button>
+          <button @click="ending" class="btn btn-danger"><i class="bi-badge-cc"></i> Завершить</button>
         </div>
       </form>
     </div>
@@ -60,11 +60,12 @@
     
                 </div>
                 <div class="col-md-10">
+                  {{ element.id }}
                   <div v-if="!element.editmode" class="product-name">{{ element.name }}</div>
-                  <label v-else>Имя товара</label>
+                  <label v-else>Название:</label>
                   <input class="form-control mb-1" type="text" v-if="element.editmode" v-model="element.name">
                   <div v-if="!element.editmode" class="product-description">{{ element.description }}</div>
-                  <label v-else>Описание товара</label>
+                  <label v-else>Описание:</label>
                   <input class="form-control mb-1" type="text" v-if="element.editmode" v-model="element.description">
                   <label v-if="element.editmode">Цена</label>
                   <input type="number" class="form-control mb-1" v-model="element.price" v-if="element.editmode">
@@ -74,11 +75,11 @@
     
                     <div v-show="!element.editmode" class="product-price">Цена: <strong>{{ element.price }}</strong></div>
     
-                    <button v-show="!element.editmode" @click="element.editmode=true" class="btn btn-success me-1" title="Выполнить какие-нибудь изменения">
-                      <i class="bi bi-pen"></i> <span class="d-none d-md-inline">Редактировать</span>
+                    <button v-show="!element.editmode" @click="element.editmode=true" class="btn btn-info me-1" title="Выполнить какие-нибудь изменения">
+                      <i class="bi bi-pen"></i> <span class="d-none d-md-inline"> Редактировать</span>
                     </button>
-                    <button v-show="element.editmode" @click="element.editmode=false" class="btn btn-info me-1" title="Выполнить какие-нибудь изменения">
-                      <i class="bi bi-pen"></i> <span class="d-none d-md-inline">Сохранить</span>
+                    <button v-show="element.editmode" @click="updateProduct(element)" class="btn btn-success me-1" title="Выполнить какие-нибудь изменения">
+                      <i class="bi-journals"></i> <span class="d-none d-md-inline"> Сохранить</span>
                     </button>
                     <button @click="delProduct(element)" class="btn btn-danger me-1" title="Удалить">
                       <i class="bi bi-x-circle"></i> <span class="d-none d-md-inline">Удалить</span>
@@ -226,8 +227,22 @@ export default {
       // console.log(description)
       // console.log(price)
     },
-    async updateProduct() {
+    async updateProduct(element) {
+      element.editmode=false
+      const response = await fetch('/updaterec', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          id: element.id,
+          name: element.name,
+          description: element.description,
+          price: element.price
+        })
 
+      })
+      
     },
     async delProduct(element) {
       this.elements.splice(this.elements.indexOf(element), 1)

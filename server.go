@@ -21,6 +21,7 @@ import (
 )
 
 type Product struct {
+	Id          int    `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Price       int    `json:"price"`
@@ -171,13 +172,14 @@ func encrtyptPasswords(password string) string {
 }
 func loadFromDB() {
 
+	var id int
 	var price int
 	var name string
 	var description string
 	var imgpath string
 
 	// rows, err := db.Query()
-	stmt, err := db.Prepare(`select name_product,description_product,price,imgpath from products`)
+	stmt, err := db.Prepare(`select id, name_product,description_product,price,imgpath from products`)
 	if err != nil {
 		panic(err)
 	}
@@ -188,14 +190,16 @@ func loadFromDB() {
 		panic(err)
 	}
 	defer rows.Close()
+	products = products[:0]
 
 	for rows.Next() {
-		err := rows.Scan(&name, &description, &price, &imgpath)
+		err := rows.Scan(&id, &name, &description, &price, &imgpath)
 		if err != nil {
 			panic(err)
 		}
 
 		products = append(products, Product{
+			Id:          id,
 			Name:        name,
 			Description: description,
 			Price:       price,
@@ -235,6 +239,7 @@ func remove(slice []Product, index string) []Product {
 	}
 	return slice
 }
+
 func main() {
 
 	// id := uuid.New()
@@ -248,7 +253,7 @@ func main() {
 	// saveProductsToJSON()
 	// loadProductsFromJSON()
 	// sendDataToDBpostgres()
-	loadFromDB()
+	// loadFromDB()
 	// clear_image()
 	// e := echo.New()
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
@@ -370,11 +375,6 @@ func main() {
 
 		log.Printf("Добавлено %d\n", rowCnt)
 		/*
-			json_map := make(map[string]interface{})
-			err := json.NewDecoder(c.Request().Body).Decode(&json_map)
-			if err != nil {
-				return err
-			}
 
 			fmt.Println(json_map)
 
@@ -465,12 +465,7 @@ func main() {
 
 		// а это для vue шки
 		fmt.Printf("name: %v\ndescription: %v\nprice: %v\n", name, description, price)
-		products = append(products, Product{
-			Name:        name,
-			Description: description,
-			Price:       price,
-			ImgPath:     imgpath,
-		})
+		loadFromDB()
 
 		page, err := strconv.Atoi(c.QueryParam("p"))
 		if err != nil {
@@ -509,7 +504,6 @@ func main() {
 		//return c.Redirect(http.StatusFound, "/products")
 		// return c.JSON(http.StatusOK, products)
 	})
-
 	// для post с multipart/form-data работает норм - перезагрузка с использованием button с submit
 	// e.POST("/sendProduct", func(c echo.Context) error {
 	// 	// читаем данные из формы
@@ -581,7 +575,6 @@ func main() {
 	// 	// return c.Redirect(http.StatusOK, "/sendProduct")
 	// 	return c.Redirect(http.StatusFound, "/products")
 	// })
-
 	e.POST("/t2", func(c echo.Context) error {
 		fmt.Println(c)
 		// json_map := make(map[string]interface{})
@@ -679,6 +672,42 @@ func main() {
 	e.GET("*", func(c echo.Context) error {
 		return c.File("index.html")
 		// return 123
+	})
+
+	e.POST("/updaterec", func(c echo.Context) error {
+		json_map := make(map[string]interface{})
+		err := json.NewDecoder(c.Request().Body).Decode(&json_map)
+		if err != nil {
+			return err
+		}
+		id := json_map["id"].(float64)
+		name := json_map["name"].(string)
+		description := json_map["description"].(string)
+		price := json_map["price"].(float64)
+		// удаление записи из бд
+		stmt, err := db.Prepare(`update products set name_product=$1, description_product=$2, price=$3 where id=$4`)
+		if err != nil {
+			log.Fatal(err)
+		}
+		res, err := stmt.Exec(name, description, price, id) // тут мы записываем данные в БД
+		rowCnt, err := res.RowsAffected()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Обновлено строк: ", rowCnt)
+
+		// Обновляем массив для vue-шек
+		for i, item := range products {
+
+			if item.Id == int(id) {
+				products[i].Name = name
+				products[i].Description = description
+				products[i].Price = int(price)
+
+			}
+		}
+
+		return c.JSON(http.StatusOK, "OK")
 	})
 	e.POST("/delrec", func(c echo.Context) error {
 		name := c.QueryParam("name")

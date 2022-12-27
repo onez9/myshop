@@ -17,7 +17,18 @@
       </nav>
     </div>
     
-    <button v-if="!hide" @click="hide=true" class="btn btn-info"><i class="bi-plus-square"></i> Новый товар</button>
+    <div class="d-flex">
+      <button v-if="!hide" @click="hide=true" class="btn btn-info me-1"><i class="bi-plus-square"></i> Новый товар</button>
+      <!-- <button @click="" class="btn btn-warning"><i class="bi-plus-square"></i> Перейти в корзину</button> -->
+
+      <router-link to="/cart" customv-slot="{ navigate }">
+      <button class="btn btn-warning" @click="navigate" role="link">
+        <i class="bi-link"></i> Перейти в корзину
+      </button>
+      </router-link>
+
+
+    </div>
     <div v-if="hide">
       <!-- <form action="/sendProduct" method="POST" enctype="multipart/form-data"> -->
       <form method="POST">
@@ -84,7 +95,7 @@
                     <button @click="delProduct(element)" class="btn btn-danger me-1" title="Удалить">
                       <i class="bi bi-x-circle"></i> <span class="d-none d-md-inline">Удалить</span>
                     </button>
-                    <button @click="t1" class="btn btn-warning" title="В корзину">
+                    <button @click="addToCart(element)" class="btn btn-warning" title="В корзину">
                       <i class="bi bi-cart"></i> <span class="d-none d-md-inline">В корзину</span>
                     </button>
                   </div>
@@ -253,6 +264,19 @@ export default {
       })
       this.elements = await response.json();
       await this.getProductsCount()
+    },
+    async addToCart(element) {
+      const response = await fetch("/addtocart", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          product_id: element.id
+        })
+      })
+
+      console.log(await response.json())
     },
     async changePage(page) {
       this.currentPage = page

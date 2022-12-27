@@ -4,6 +4,7 @@ import AboutView from '../views/About.vue'
 import HomeView from '../views/Home.vue'
 import RegView from '../views/Reg.vue'
 import AuthView from '../views/Auth.vue'
+import CartView from '../views/Cart.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -32,6 +33,11 @@ const router = createRouter({
       path: '/reg',
       name: 'reg',
       component: RegView
+    },
+    {
+      path: '/cart',
+      name: 'cart',
+      component: CartView
     }
   ]
 })

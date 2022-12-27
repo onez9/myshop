@@ -52,6 +52,7 @@ var db, err = sql.Open("postgres", connStr)
 
 // var products = []Product
 var products []Product
+var cart_products []Product
 
 func sendDataToDBpostgres() {
 
@@ -190,7 +191,7 @@ func loadFromDB() {
 		panic(err)
 	}
 	defer rows.Close()
-	products = products[:0]
+	products = products[:0] // перед каждой загрузкой элементов в массив, отчищаем его полностью
 
 	for rows.Next() {
 		err := rows.Scan(&id, &name, &description, &price, &imgpath)
@@ -239,6 +240,16 @@ func remove(slice []Product, index string) []Product {
 	}
 	return slice
 }
+func remove_i(slice []Product, index int) []Product {
+	for i, product := range slice {
+		if product.Id == index {
+			// fmt.Println(slice[i:])
+			// fmt.Println(slice[i+1:])
+			return append(slice[:i], slice[i+1:]...)
+		}
+	}
+	return slice
+}
 
 func main() {
 
@@ -249,11 +260,13 @@ func main() {
 
 	e := echo.New()
 	products = make([]Product, 0)
+	cart_products = make([]Product, 0)
+
 	// fillProductsToArray()
 	// saveProductsToJSON()
 	// loadProductsFromJSON()
 	// sendDataToDBpostgres()
-	// loadFromDB()
+	loadFromDB()
 	// clear_image()
 	// e := echo.New()
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
@@ -315,6 +328,60 @@ func main() {
 			return c.JSON(http.StatusOK, productsPage)
 		}
 	})
+
+	// Загрузка при старте пользовательской корзины с продуктами картинками :)
+	e.GET("/getcartitems", func(c echo.Context) error {
+		sess, _ := session.Get("session", c)
+		fmt.Println("session(addtocart: ", sess.Values["id"])
+		fmt.Println("session(addtocart: ", sess.Values["email"])
+		fmt.Println("session(addtocart: ", sess.Values["password"])
+
+		query := `select p.id,p.name_product,p.description_product,p.price,p.imgpath from users as u
+		left join users_products on u.id=users_products.user_id
+		inner join products as p on users_products.product_id=p.id
+		where u.id=$1`
+		stmt, err := db.Prepare(query)
+		if err != nil {
+			panic(err)
+		}
+
+		defer stmt.Close() // закрытие соединения
+		rows, err := stmt.Query(sess.Values["id"])
+		if err != nil {
+			panic(err)
+		}
+		defer rows.Close()
+
+		var id int
+		var price int
+		var name string
+		var description string
+		var imgpath string
+
+		cart_products = cart_products[:0] // перед каждым запросом к базе данных убираем все элементы
+		for rows.Next() {
+			err := rows.Scan(&id, &name, &description, &price, &imgpath)
+			if err != nil {
+				panic(err)
+			}
+
+			cart_products = append(cart_products, Product{
+				Id:          id,
+				Name:        name,
+				Description: description,
+				Price:       price,
+				ImgPath:     imgpath,
+			})
+			fmt.Println(id, name, description, price, imgpath)
+		}
+		err = rows.Err()
+		if err != nil {
+			panic(err)
+		}
+		return c.JSON(http.StatusOK, cart_products)
+		// return c.JSON(http.StatusOK, "OK")
+	})
+
 	// количество товаров
 	e.GET("/getproductscount", func(c echo.Context) error {
 		fmt.Println(len(products))
@@ -504,6 +571,40 @@ func main() {
 		//return c.Redirect(http.StatusFound, "/products")
 		// return c.JSON(http.StatusOK, products)
 	})
+
+	e.POST("/addtocart", func(c echo.Context) error {
+		sess, _ := session.Get("session", c)
+		fmt.Println("session(addtocart: ", sess.Values["id"])
+		fmt.Println("session(addtocart: ", sess.Values["email"])
+		fmt.Println("session(addtocart: ", sess.Values["password"])
+
+		json_map := make(map[string]interface{})
+		err := json.NewDecoder(c.Request().Body).Decode(&json_map)
+		if err != nil {
+			return err
+		}
+
+		user_id := sess.Values["id"]
+		product_id := int(json_map["product_id"].(float64))
+
+		fmt.Println("user_id: ", user_id)
+		fmt.Println("product_id: ", product_id)
+
+		// тут мы добавляем в базу данных нужную инфу
+		stmt, err := db.Prepare(`INSERT INTO users_products(user_id,product_id)Values($1,$2)`)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		res, err := stmt.Exec(user_id, product_id)
+		rowCnt, err := res.RowsAffected()
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("Добавлено %d\n", rowCnt)
+
+		return c.JSON(http.StatusOK, "OK")
+	})
 	// для post с multipart/form-data работает норм - перезагрузка с использованием button с submit
 	// e.POST("/sendProduct", func(c echo.Context) error {
 	// 	// читаем данные из формы
@@ -621,17 +722,20 @@ func main() {
 		email := json_map["email"].(string)
 		password := json_map["password"].(string)
 		hash := encrtyptPasswords(password)
-		fmt.Println(email)
-		fmt.Println(hash)
 
-		stmt, err := db.Prepare(`select passw from users where email=$1`)
+		fmt.Println("email(authentication): ", email)
+		fmt.Println("hash(authentication):: ", hash)
+
+		stmt, err := db.Prepare(`select id, passw from users where email=$1`)
 		if err != nil {
 			log.Fatal(err)
 		}
 		// defer stmt.Close()
 
+		var id int
 		var hash_from_db string
-		err = stmt.QueryRow(email).Scan(&hash_from_db)
+		err = stmt.QueryRow(email).Scan(&id, &hash_from_db)
+		fmt.Println(id)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				fmt.Println("Тут ничего нет!")
@@ -658,6 +762,7 @@ func main() {
 				MaxAge:   86400 * 7,
 				HttpOnly: true,
 			}
+			sess.Values["id"] = id
 			sess.Values["email"] = email
 			sess.Values["password"] = password
 			fmt.Println(sess.Values)
@@ -744,5 +849,34 @@ func main() {
 
 		return c.JSON(http.StatusOK, productsPage)
 	})
+
+	e.POST("/del_rec_in_cart", func(c echo.Context) error {
+		sess, _ := session.Get("session", c)
+		product_id, err := strconv.Atoi(c.QueryParam("id")) // product_id - получаем из url запроса
+		user_id := sess.Values["id"]                        // user_id - получаем из сессии пользователя
+		if err != nil {
+			fmt.Println("Проблемы с конвертаций из строки в число маршруте - del_rec_in_cart")
+			log.Fatal(err)
+		}
+		// удаление записи из бд корзины а именно связи иногие ко многим в промежуточной корзине
+		stmt, err := db.Prepare(`delete from users_products where user_id=$1 and product_id=$2`)
+		if err != nil {
+			log.Fatal(err)
+		}
+		res, err := stmt.Exec(user_id, product_id)
+		rowCnt, err := res.RowsAffected()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println("Было затронуто: ", rowCnt)
+		fmt.Println(777, len(products))
+		cart_products = remove_i(cart_products, product_id)
+		fmt.Println(777, len(cart_products))
+		// подготовка отправки данных
+
+		return c.JSON(http.StatusOK, cart_products)
+	})
+
 	e.Logger.Fatal(e.Start(":1323"))
 }

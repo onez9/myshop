@@ -18,7 +18,7 @@
     </div>
     
     <div class="d-flex">
-      <button v-if="!hide && my_name!=''" @click="hide=true" class="btn btn-info me-1"><i class="bi-plus-square"></i> {{ new_element }}</button>
+      <button v-if="!hide && access" @click="hide=true" class="btn btn-info me-1"><i class="bi-plus-square"></i> {{ new_element }}</button>
       <!-- <button @click="" class="btn btn-warning"><i class="bi-plus-square"></i> Перейти в корзину</button> -->
       <!-- {{ my_name }} -->
       <router-link v-if="my_name!=''" to="/cart" customv-slot="{ navigate }">
@@ -86,13 +86,13 @@
     
                     <div v-show="!element.editmode" class="product-price">{{ temp }}: <strong>{{ element.price }}</strong></div>
     
-                    <button v-show="!element.editmode && my_name!=''" @click="element.editmode=true" class="btn btn-info btn-sm me-1" title="Выполнить какие-нибудь изменения">
+                    <button v-show="!element.editmode && access" @click="element.editmode=true" class="btn btn-info btn-sm me-1" title="Выполнить какие-нибудь изменения">
                       <i class="bi bi-pen"></i> <span class="d-none d-md-inline"> Редактировать</span>
                     </button>
-                    <button v-show="element.editmode" @click="updateProduct(element)" class="btn btn-success btn-sm me-1" title="Выполнить какие-нибудь изменения">
+                    <button v-show="element.editmode && access" @click="updateProduct(element)" class="btn btn-success btn-sm me-1" title="Выполнить какие-нибудь изменения">
                       <i class="bi-journals"></i> <span class="d-none d-md-inline"> Сохранить</span>
                     </button>
-                    <button v-show="my_name!=''" @click="delProduct(element)" class="btn btn-danger btn-sm me-1" title="Удалить">
+                    <button v-show="access" @click="delProduct(element)" class="btn btn-danger btn-sm me-1" title="Удалить">
                       <i class="bi-x-circle"></i> <span class="d-none d-md-inline">Удалить</span>
                     </button>
                     <button v-show="my_name!=''" @click="addToCart(element)" class="btn btn-warning btn-sm me-1" title="В корзину">
@@ -133,7 +133,7 @@ export default {
       temp: "Степень ахуенности",
       new_element: "Создать персонажа",
       my_name: "",
-      
+      access: false,
     }
   },
   computed: { 
@@ -142,6 +142,7 @@ export default {
     await this.getProducts()
     await this.getProductsCount()
     await this.whoami()
+    await this.is_access()
     // console.log('Компонент примонтирован!');
   },
   methods: {
@@ -351,6 +352,13 @@ export default {
 
       this.my_name = await response.json()
     },
+    async is_access() {
+      const response = await fetch("/is_access", {
+        method: "POST"
+      })
+
+      this.access = await response.json()
+    }
   }
 
 }

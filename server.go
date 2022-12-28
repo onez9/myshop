@@ -304,6 +304,30 @@ func main() {
 	// 	return c.NoContent(http.StatusOK)
 	// })
 
+	e.POST("/is_access", func(c echo.Context) error {
+		stmt, err := db.Prepare(`select sudo from users where email=$1`)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		sess, _ := session.Get("session", c)
+		email, err1 := sess.Values["email"]
+
+		var yes_or_no bool
+		fmt.Println(email, err1)
+		// если пользователя нет в базе данных то делай это
+		err = stmt.QueryRow(email).Scan(&yes_or_no)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				fmt.Println("Тут ничего нет! В sql-запросе ничего найденно не было! (is_access - маршрут)")
+			} else {
+				log.Fatal(err)
+			}
+		}
+
+		return c.JSON(http.StatusOK, yes_or_no)
+	})
+
 	e.GET("/whoami", func(c echo.Context) error {
 		sess, _ := session.Get("session", c)
 		email := sess.Values["email"]

@@ -84,21 +84,21 @@
                   <div class="d-flex justify-content-end">
     
     
-                    <div v-show="!element.editmode" class="product-price">{{ temp }}: <strong>{{ element.price }}</strong></div>
+                    <div v-if="!element.editmode" class="product-price">{{ temp }}: <strong>{{ element.price }}</strong></div>
     
-                    <button v-show="!element.editmode && access" @click="element.editmode=true" class="btn btn-info btn-sm me-1" title="Выполнить какие-нибудь изменения">
+                    <button v-if="!element.editmode && access" @click="element.editmode=true" class="btn btn-info btn-sm me-1" title="Выполнить какие-нибудь изменения">
                       <i class="bi bi-pen"></i> <span class="d-none d-md-inline"> Редактировать</span>
                     </button>
-                    <button v-show="element.editmode && access" @click="updateProduct(element)" class="btn btn-success btn-sm me-1" title="Выполнить какие-нибудь изменения">
+                    <button v-if="element.editmode && access" @click="updateProduct(element)" class="btn btn-success btn-sm me-1" title="Выполнить какие-нибудь изменения">
                       <i class="bi-journals"></i> <span class="d-none d-md-inline"> Сохранить</span>
                     </button>
-                    <button v-show="access" @click="delProduct(element)" class="btn btn-danger btn-sm me-1" title="Удалить">
+                    <button v-if="access" @click="delProduct(element)" class="btn btn-danger btn-sm me-1" title="Удалить">
                       <i class="bi-x-circle"></i> <span class="d-none d-md-inline">Удалить</span>
                     </button>
-                    <button v-show="my_name!=''" @click="addToCart(element)" class="btn btn-warning btn-sm me-1" title="В корзину">
+                    <button v-if="my_name!=''" @click="addToCart(element)" class="btn btn-warning btn-sm me-1" title="В корзину">
                       <i class="bi-cart"></i> <span class="d-none d-md-inline">В корзину</span>
                     </button>
-                    <button v-show="element.editmode" @click="element.editmode=false" class="btn btn-secondary btn-sm" title="Отменить">
+                    <button v-if="element.editmode" @click="element.editmode=false" class="btn btn-secondary btn-sm" title="Отменить">
                       <i class="bi-x-octagon"></i> <span class="d-none d-md-inline"> Отмена</span>
                     </button>
                   </div>

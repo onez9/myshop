@@ -9,7 +9,7 @@
 	  <div class="col-md-4">
 		  <div class="card shadow rounded my-3 th">
 			  <div class="card-body">
-				  <div><img src="assets/img/p1.jpeg" class="avatar"></div>
+				  <div><img src="assets/img/p1.jpg" class="avatar"></div>
 				  <div class="avatar-post"><i class="bi bi-person"></i> Генеральный директор</div>
 				  <div class="avatar-text">Самый целеустремленный человек</div>
 			  </div>
@@ -18,7 +18,7 @@
 	  <div class="col-md-4">
 		  <div class="card shadow rounded my-3 th">
 			  <div class="card-body">
-				  <div><img src="assets/img/p3.jpeg" class="avatar"></div>
+				  <div><img src="assets/img/p2.jpg" class="avatar"></div>
 				  <div class="avatar-post">Маркетолог</div>
 				  <div class="avatar-text">Она пишет все эти надписи</div>
 			  </div>
@@ -27,7 +27,7 @@
 	  <div class="col-md-4">
 		  <div class="card shadow rounded my-3 th">
 			  <div class="card-body">
-				  <div><img src="assets/img/p2.jpeg" class="avatar"></div>
+				  <div><img src="assets/img/p3.jpg" class="avatar"></div>
 				  <div class="avatar-post">Рабочий</div>
 				  <div class="avatar-text">Он выполняет всю работу</div>
 			  </div>

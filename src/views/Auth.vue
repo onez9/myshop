@@ -9,13 +9,21 @@
     <div class="container">
       <div class="row">
         <div class="col-sm-4">
-          <label for="email">Email:</label>
-          <input v-model="email" type="text" id="email" class="form-control" placeholder="Введите email" required>
-          <label for="pass">Пароль:</label>
-          <input v-model="password" type="password" id="pass" class="form-control" placeholder="Введите пароль" required>
-          
-          <button @click="authCheck(email, password)" class="btn btn-success mt-1 me-1">Войти</button>
-          <button class="btn btn-success mt-1">Регистрация</button>
+          <form action="/authentication1" method="POST" enctype="multipart/form-data">
+            <label for="email">Email:</label>
+            <input name="email" type="text" id="email" class="form-control" placeholder="Введите email" required>
+            <label for="pass">Пароль:</label>
+            <input name="password" type="password" id="pass" class="form-control" placeholder="Введите пароль" required>
+            
+            <button type="submit" class="btn btn-success mt-1 me-1"><i class="bi-box-arrow-in-left"></i> Войти</button>
+
+            <router-link to="/reg" customv-slot="{ navigate }">
+              <button class="btn btn-success mt-1" @click="navigate" role="link">
+                <i class="bi-person-plus"></i> Регистрация
+              </button>
+            </router-link>
+            <!-- <button class="btn btn-success mt-1">Регистрация</button> -->
+          </form>
 
         </div>
       </div>

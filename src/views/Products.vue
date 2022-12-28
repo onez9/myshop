@@ -18,10 +18,10 @@
     </div>
     
     <div class="d-flex">
-      <button v-if="!hide" @click="hide=true" class="btn btn-info me-1"><i class="bi-plus-square"></i> Новый товар</button>
+      <button v-if="!hide && my_name!=''" @click="hide=true" class="btn btn-info me-1"><i class="bi-plus-square"></i> {{ new_element }}</button>
       <!-- <button @click="" class="btn btn-warning"><i class="bi-plus-square"></i> Перейти в корзину</button> -->
-
-      <router-link to="/cart" customv-slot="{ navigate }">
+      <!-- {{ my_name }} -->
+      <router-link v-if="my_name!=''" to="/cart" customv-slot="{ navigate }">
       <button class="btn btn-warning" @click="navigate" role="link">
         <i class="bi-link"></i> Перейти в корзину
       </button>
@@ -36,7 +36,7 @@
         <input name="name" v-model="name_product" type="text" id="name" class="form-control" required>
         <label for="description">Описание: {{ description_product }}</label>
         <input name="description" v-model="description_product" type="text" id="description" class="form-control" required>
-        <label for="price">Цена:</label>
+        <label for="price">{{ temp }}:</label>
         <input name="price" v-model.number="price_product" type="number" min="100" max="1000" id="price" class="form-control mb-1" required>
         <label for="Avatar">Аватар:</label>
         <input name="file" type="file" id="Avatar" class="form-control mb-1" required>
@@ -44,9 +44,9 @@
         <!-- <label for="name">name</label> -->
         <!-- <input type="text" id="name" class="form-control"> -->
         <div class="d-flex mt-3 mb-3">
-          <button @click="sendProduct" type="button" class="btn btn-success me-1"><i class="bi-plus-square"></i> Добавить</button>
-          <button @click="canceling" class="btn btn-warning me-1"><i class="bi-x-square"></i> Отмена</button>
-          <button @click="ending" class="btn btn-danger"><i class="bi-badge-cc"></i> Завершить</button>
+          <button @click="sendProduct" type="button" class="btn btn-success btn-sm me-1"><i class="bi-plus-square"></i> Добавить</button>
+          <button @click="canceling" class="btn btn-warning btn-sm me-1"><i class="bi-x-square"></i> Отмена</button>
+          <button @click="ending" class="btn btn-danger btn-sm"><i class="bi-badge-cc"></i> Завершить</button>
         </div>
       </form>
     </div>
@@ -78,25 +78,28 @@
                   <div v-if="!element.editmode" class="product-description">{{ element.description }}</div>
                   <label v-else>Описание:</label>
                   <input class="form-control mb-1" type="text" v-if="element.editmode" v-model="element.description">
-                  <label v-if="element.editmode">Цена</label>
+                  <label v-if="element.editmode">{{ temp }}</label>
                   <input type="number" class="form-control mb-1" v-model="element.price" v-if="element.editmode">
-                  <div class="flex-grow-1"></div>
+                  <div class="flex-grow-1 mb-3"></div>
                   <div class="d-flex justify-content-end">
     
     
-                    <div v-show="!element.editmode" class="product-price">Цена: <strong>{{ element.price }}</strong></div>
+                    <div v-show="!element.editmode" class="product-price">{{ temp }}: <strong>{{ element.price }}</strong></div>
     
-                    <button v-show="!element.editmode" @click="element.editmode=true" class="btn btn-info me-1" title="Выполнить какие-нибудь изменения">
+                    <button v-show="!element.editmode && my_name!=''" @click="element.editmode=true" class="btn btn-info btn-sm me-1" title="Выполнить какие-нибудь изменения">
                       <i class="bi bi-pen"></i> <span class="d-none d-md-inline"> Редактировать</span>
                     </button>
-                    <button v-show="element.editmode" @click="updateProduct(element)" class="btn btn-success me-1" title="Выполнить какие-нибудь изменения">
+                    <button v-show="element.editmode" @click="updateProduct(element)" class="btn btn-success btn-sm me-1" title="Выполнить какие-нибудь изменения">
                       <i class="bi-journals"></i> <span class="d-none d-md-inline"> Сохранить</span>
                     </button>
-                    <button @click="delProduct(element)" class="btn btn-danger me-1" title="Удалить">
-                      <i class="bi bi-x-circle"></i> <span class="d-none d-md-inline">Удалить</span>
+                    <button v-show="my_name!=''" @click="delProduct(element)" class="btn btn-danger btn-sm me-1" title="Удалить">
+                      <i class="bi-x-circle"></i> <span class="d-none d-md-inline">Удалить</span>
                     </button>
-                    <button @click="addToCart(element)" class="btn btn-warning" title="В корзину">
-                      <i class="bi bi-cart"></i> <span class="d-none d-md-inline">В корзину</span>
+                    <button v-show="my_name!=''" @click="addToCart(element)" class="btn btn-warning btn-sm me-1" title="В корзину">
+                      <i class="bi-cart"></i> <span class="d-none d-md-inline">В корзину</span>
+                    </button>
+                    <button v-show="element.editmode" @click="element.editmode=false" class="btn btn-secondary btn-sm" title="Отменить">
+                      <i class="bi-x-octagon"></i> <span class="d-none d-md-inline"> Отмена</span>
                     </button>
                   </div>
                 </div>
@@ -127,6 +130,9 @@ export default {
       price_product: 0,
       description_product: "",
       file: "",
+      temp: "Степень ахуенности",
+      new_element: "Создать персонажа",
+      my_name: "",
       
     }
   },
@@ -135,6 +141,7 @@ export default {
   async mounted() {
     await this.getProducts()
     await this.getProductsCount()
+    await this.whoami()
     // console.log('Компонент примонтирован!');
   },
   methods: {
@@ -336,9 +343,14 @@ export default {
       this.name_product=""
       this.description_product=""
       document.querySelector('input[type=file]').value = "";
-    }
+    },
+    async whoami() {
+      const response = await fetch("/whoami", {
+        method: "GET"
+      })
 
-
+      this.my_name = await response.json()
+    },
   }
 
 }

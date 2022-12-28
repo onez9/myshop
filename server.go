@@ -259,6 +259,9 @@ func main() {
 	defer db.Close()
 
 	e := echo.New()
+	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
+	// e.Use(middleware.Recover()) // промежуточные обработчики корневого уровня
+
 	products = make([]Product, 0)
 	cart_products = make([]Product, 0)
 
@@ -266,23 +269,47 @@ func main() {
 	// saveProductsToJSON()
 	// loadProductsFromJSON()
 	// sendDataToDBpostgres()
-	loadFromDB()
+	loadFromDB() // Загрузка данных из БД
 	// clear_image()
 	// e := echo.New()
-	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
+	//g := e.Group("/admin")     // промежуточные обработчики для группы
+	//g.Use(middleware.Logger()) // промежуточные обработчики это функция,включенная в http-запрос-ответ с доступом к Echo.Context
 
-	e.GET("/", func(c echo.Context) error {
+	e.File("/favicon.ico", "favicon.ico")
+
+	// Промежуточные обработчики для маршрута
+	/*
+			track := func(next echo.HandlerFunc) echo.HandlerFunc {
+				return func(c echo.Context) error {
+					println("request to /users")
+					return next(c)
+				}
+			}
+
+
+		e.GET("/users", func(c echo.Context) error {
+			return c.String(http.StatusOK, "/users")
+		}, track)
+	*/
+
+	// e.GET("/", func(c echo.Context) error {
+	// 	sess, _ := session.Get("session", c)
+	// 	sess.Options = &sessions.Options{
+	// 		Path:     "/",
+	// 		MaxAge:   86400 * 7,
+	// 		HttpOnly: true,
+	// 	}
+	// 	sess.Values["foo"] = "bar"
+	// 	sess.Save(c.Request(), c.Response())
+	// 	return c.NoContent(http.StatusOK)
+	// })
+
+	e.GET("/whoami", func(c echo.Context) error {
 		sess, _ := session.Get("session", c)
-		sess.Options = &sessions.Options{
-			Path:     "/",
-			MaxAge:   86400 * 7,
-			HttpOnly: true,
-		}
-		sess.Values["foo"] = "bar"
-		sess.Save(c.Request(), c.Response())
-		return c.NoContent(http.StatusOK)
-	})
+		email := sess.Values["email"]
 
+		return c.JSON(http.StatusOK, email)
+	})
 	// Маршрут для products
 	e.GET("/getproducts", func(c echo.Context) error {
 		// Отвечает за сессию
@@ -305,36 +332,36 @@ func main() {
 			} else {
 				log.Fatal(err)
 			}
-			return c.JSON(http.StatusOK, products[0:0])
-		} else {
-			// иначе делай это
-			page, err := strconv.Atoi(c.QueryParam("p"))
-			if err != nil {
-				log.Fatal(err)
-			}
-			limit, err := strconv.Atoi(c.QueryParam("limit"))
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			fromIndex := page * limit     // начальный индекс товара
-			toIndex := page*limit + limit // конечный индекс товара
-			if toIndex > len(products) {
-				toIndex = len(products)
-			}
-			productsPage := products[fromIndex:toIndex]
-
-			fmt.Println(page, limit)
-			return c.JSON(http.StatusOK, productsPage)
+			//return c.JSON(http.StatusOK, products[0:0])
 		}
+		// иначе делай это
+		page, err := strconv.Atoi(c.QueryParam("p"))
+		if err != nil {
+			log.Fatal(err)
+		}
+		limit, err := strconv.Atoi(c.QueryParam("limit"))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fromIndex := page * limit     // начальный индекс товара
+		toIndex := page*limit + limit // конечный индекс товара
+		if toIndex > len(products) {
+			toIndex = len(products)
+		}
+		productsPage := products[fromIndex:toIndex]
+
+		fmt.Println(page, limit)
+		return c.JSON(http.StatusOK, productsPage)
+
 	})
 
 	// Загрузка при старте пользовательской корзины с продуктами картинками :)
 	e.GET("/getcartitems", func(c echo.Context) error {
 		sess, _ := session.Get("session", c)
-		fmt.Println("session(addtocart: ", sess.Values["id"])
-		fmt.Println("session(addtocart: ", sess.Values["email"])
-		fmt.Println("session(addtocart: ", sess.Values["password"])
+		fmt.Println("session(addtocart) id: ", sess.Values["id"])
+		fmt.Println("session(addtocart) email: ", sess.Values["email"])
+		fmt.Println("session(addtocart) password: ", sess.Values["password"])
 
 		query := `select p.id,p.name_product,p.description_product,p.price,p.imgpath from users as u
 		left join users_products on u.id=users_products.user_id
@@ -388,8 +415,8 @@ func main() {
 		return c.JSON(http.StatusOK, len(products))
 	})
 	// Регистрируем маршруты для статичных файлов
-	e.Static("/public", "public")
-	e.Static("/assets", "public/assets")
+	e.Static("/public", "public")        // Пример будет обслуживать любой файл из каталога ресурсов по пути /public/*
+	e.Static("/assets", "public/assets") // Пример будет обслуживать любой файл из каталога ресурсов по пути /public/assets/*
 	// Пример обработчика GET с получением параметров
 	e.GET("/testget", func(c echo.Context) error {
 		name := c.QueryParam("name")
@@ -402,14 +429,10 @@ func main() {
 		})
 	})
 	e.GET("/", func(c echo.Context) error {
-		name := c.QueryParam("name")
-		fmt.Println(name)
-		type H map[string]interface{}
-		return c.JSON(http.StatusOK, H{
-			"t1": "1",
-			"t2": "2",
-			"t3": "3",
-		})
+		// name := c.QueryParam("name")
+		// fmt.Println(name)
+		// type H map[string]interface{}
+		return c.Redirect(http.StatusFound, "/home")
 	})
 	e.POST("/addUser", func(c echo.Context) error {
 		firstname := c.FormValue("name")
@@ -712,7 +735,7 @@ func main() {
 	// Пример обработчика запроса POST с получением параметров
 	e.POST("/authentication", func(c echo.Context) error {
 		sess, _ := session.Get("session", c)
-		sess.Values["email"] = "no"
+		sess.Values["email"] = ""
 		fmt.Println(c)
 		json_map := make(map[string]interface{})
 		err := json.NewDecoder(c.Request().Body).Decode(&json_map)
@@ -773,6 +796,59 @@ func main() {
 		}
 		return c.JSON(http.StatusOK, "OK")
 	})
+
+	e.POST("/authentication1", func(c echo.Context) error {
+		// данные из формы авторизации
+		email := c.FormValue("email")
+		password := c.FormValue("password")
+		hash := encrtyptPasswords(password)
+
+		stmt, err := db.Prepare(`select id, passw from users where email=$1`)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var id int
+		var hash_from_db string // переменная для записи хешированного пароля из базы данных
+		err = stmt.QueryRow(email).Scan(&id, &hash_from_db)
+		fmt.Println(id)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				fmt.Println("Тут ничего нет!")
+			} else {
+				log.Fatal(err)
+			}
+		}
+
+		sess, _ := session.Get("session", c)
+		sess.Options = &sessions.Options{
+			Path:     "/",
+			MaxAge:   86400 * 7,
+			HttpOnly: true,
+		}
+
+		sess.Values["id"] = ""
+		sess.Values["email"] = ""
+		sess.Values["password"] = ""
+		sess.Save(c.Request(), c.Response())
+
+		if hash_from_db == hash {
+			fmt.Println("Авторизация успешно пройдена!")
+
+			fmt.Println(sess)
+
+			sess.Values["id"] = id
+			sess.Values["email"] = email
+			sess.Values["password"] = password
+			fmt.Println(sess.Values)
+			sess.Save(c.Request(), c.Response())
+
+		} else {
+			fmt.Println("Пошёл нахуй!")
+		}
+		return c.Redirect(http.StatusFound, "/home")
+	})
+
 	// Основной обработчик GET / - отдает файл index.html
 	e.GET("*", func(c echo.Context) error {
 		return c.File("index.html")
@@ -878,5 +954,14 @@ func main() {
 		return c.JSON(http.StatusOK, cart_products)
 	})
 
+	e.POST("/logout", func(c echo.Context) error {
+		sess, _ := session.Get("session", c)
+		sess.Values["id"] = ""
+		sess.Values["email"] = ""
+		sess.Values["password"] = ""
+		sess.Save(c.Request(), c.Response())
+
+		return c.JSON(http.StatusOK, "OK")
+	})
 	e.Logger.Fatal(e.Start(":1323"))
 }

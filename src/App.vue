@@ -22,7 +22,7 @@ import { RouterLink, RouterView } from 'vue-router'
             </li>
             <li class="nav-item">
               <!-- <a class="nav-link" href="products.html"><i class="bi-bag-check"></i> Товары</a> -->
-              <router-link class="nav-link" to="/products"><i class="bi-star"></i> Товары</router-link>
+              <router-link class="nav-link" to="/products"><i class="bi-star"></i> {{ elements }}</router-link>
             </li>
             <li class="nav-item">
               <!-- <a class="nav-link" href="about.html"><i class="bi-file-earmark-person"></i> О нас</a> -->
@@ -37,8 +37,14 @@ import { RouterLink, RouterView } from 'vue-router'
               <a class="nav-link" href="about.html"><i class="bi-file-earmark-person"></i> О нас</a> 
               <router-link class="nav-link" to="/auth"><i class="bi-box-arrow-in-left"></i> Войти</router-link>
             </div> -->
-            <div> 
-              <router-link class="nav-link" to="/reg"><i class="bi-box-arrow-in-right"></i> Выйти</router-link>
+            <span class="navbar-text">
+              {{ my_name }}
+            </span>
+            <div v-if="my_name!=''"> 
+              <router-link @click="logout" class="nav-link" to="/auth"><i class="bi-box-arrow-in-right"></i> Выйти</router-link>
+            </div>
+            <div v-else> 
+              <router-link @click="logout" class="nav-link" to="/auth"><i class="bi-box-arrow-in-right"></i> Войти</router-link>
             </div>
           </div>
         </div>
@@ -55,6 +61,43 @@ import { RouterLink, RouterView } from 'vue-router'
 
 
 <script>
+
+export default {
+  data() {
+    return {
+      firstname: "",
+      lastname: "",
+      email: "",
+      password: "",
+      pass1: "",
+      pass2: "",
+      elements: "Песонажи",
+      my_name: "",
+    }
+  },
+  async mounted() {
+    await this.whoami()
+  },
+  methods: {
+    async whoami() {
+      const response = await fetch("/whoami", {
+        method: "GET"
+      })
+
+      this.my_name = await response.json()
+    },
+    async logout() {
+      this.my_name = ""
+      const response = await fetch("/logout", {
+        method: "POST",
+
+      })
+      console.log(await response.json())
+    }
+  }
+}
+
+
 </script>
 <style scoped>
 </style>

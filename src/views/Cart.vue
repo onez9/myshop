@@ -25,7 +25,7 @@
 
                   <div class="flex-grow-1"></div>
                   <div class="d-flex justify-content-end">    
-                    <div class="product-price">Цена: <strong>{{ element.price }}</strong></div>
+                    <div class="product-price">{{ temp }}: <strong>{{ element.price }}</strong></div>
     
                     <button @click="delItemCart(element)" class="btn btn-danger me-1" title="Удалить">
                       <i class="bi bi-x-circle"></i> <span class="d-none d-md-inline">Удалить</span>
@@ -44,20 +44,13 @@
 </template>
 
 <script>
-const productsPerPage = 3
 export default {
   el: '#elements',
   data() {
     return {
-      currentRating: 0,
-      totalpages: 0,
+      // основные элементы корзины
       cart_items: [],
-      currentPage: 0,
-      hide: false,
-      name_product: "",
-      price_product: 0,
-      description_product: "",
-      file: "",
+      temp: "Пиздатость"
       
     }
   },
@@ -68,6 +61,7 @@ export default {
     // console.log('Компонент примонтирован!');
   },
   methods: {
+    // кнопка удалить в корзине
     async delItemCart(element) {
       this.cart_items.splice(this.cart_items.indexOf(element), 1)
       // alert(this.elements.indexOf(element))
@@ -77,6 +71,7 @@ export default {
       })
       this.cart_items = await response.json();
     },
+    // выполняется при загрузке страницы
     async getItemsCart() {
       const response = await fetch(`/getcartitems`, {
         method: 'GET'

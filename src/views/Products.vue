@@ -86,7 +86,7 @@
     
                     <div v-if="!element.editmode" class="product-price">{{ temp }}: <strong>{{ element.price }}</strong></div>
     
-                    <button v-if="!element.editmode && access" @click="element.editmode=true" class="btn btn-info btn-sm me-1" title="Выполнить какие-нибудь изменения">
+                    <button v-if="!element.editmode && access" @click="enableEditMode(element)" class="btn btn-info btn-sm me-1" title="Выполнить какие-нибудь изменения">
                       <i class="bi bi-pen"></i> <span class="d-none d-md-inline"> Редактировать</span>
                     </button>
                     <button v-if="element.editmode && access" @click="updateProduct(element)" class="btn btn-success btn-sm me-1" title="Выполнить какие-нибудь изменения">
@@ -98,7 +98,7 @@
                     <button v-if="my_name!=''" @click="addToCart(element)" class="btn btn-warning btn-sm me-1" title="В корзину">
                       <i class="bi-cart"></i> <span class="d-none d-md-inline">В корзину</span>
                     </button>
-                    <button v-if="element.editmode" @click="element.editmode=false" class="btn btn-secondary btn-sm" title="Отменить">
+                    <button v-if="element.editmode" @click="disableEditMode(element)" class="btn btn-secondary btn-sm" title="Отменить">
                       <i class="bi-x-octagon"></i> <span class="d-none d-md-inline"> Отмена</span>
                     </button>
                   </div>
@@ -146,7 +146,7 @@ export default {
     // console.log('Компонент примонтирован!');
   },
   methods: {
-    t1() {
+    async t1() {
       alert('Товар добавлен в корзину')
     },
     async uploadFile(e) {
@@ -283,7 +283,7 @@ export default {
           product_id: element.id
         })
       })
-
+      this.t1()
       console.log(await response.json())
     },
     async changePage(page) {
@@ -358,6 +358,18 @@ export default {
       })
 
       this.access = await response.json()
+    },
+    async enableEditMode(element) {
+      element.editmode=true
+      element.name_back=element.name
+      element.description_back=element.description
+      element.price_back=element.price
+    },
+    async disableEditMode(element) {
+      element.editmode=false
+      element.name=element.name_back
+      element.description=element.description_back
+      element.price=element.price_back
     }
   }
 

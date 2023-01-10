@@ -23,7 +23,7 @@
     </div>
     <div class="carousel-inner">
       <div class="carousel-item active">
-        <img src="assets/img/m1.jpg" class="d-block w-100" alt="...">
+        <img src="assets/img/c4c78f0e-2b99-4928-aff8-c0f31c781d2c.jpeg" class="d-block w-100" alt="...">
       </div>
       <div class="carousel-item">
         <img src="assets/img/m2.jpg" class="d-block w-100" alt="...">
@@ -55,33 +55,7 @@ export default {
     }
   },
   methods: {
-    async testPost() {
-      // Отправляем запрос типа POST
-      const response = await fetch('/testpost', {
-        method: 'POST', 
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: "Иван"
-        }) 
-      });
-
-      const jsonResult = await response.json();
-
-      console.log(jsonResult);
-    },
-    async testGet() {
-      // Отправляем запрос типа GET
-      const response = await fetch('/testget', {
-        method: 'GET',
-        // 'Access-Control-Allow-Origin': '*'
-      });
-
-      const textResult = await response.text();
-
-      console.log(textResult);
-    }
+  
   }
 }
 </script>

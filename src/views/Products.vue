@@ -1,10 +1,12 @@
 <script setup>
+import Swal from 'sweetalert2'
 </script>
 
 <template>
   <div class="container" id="elements">
     <!-- <p>Список товаров</p> -->
   
+    <!-- навигация по страницам -->
     <div class="mt-3 d-flex justify-content-center">
       <nav aria-label="Page navigation mt-1 example">
         <ul class="pagination">
@@ -23,12 +25,14 @@
       <!-- {{ my_name }} -->
       <router-link v-if="my_name!=''" to="/cart" customv-slot="{ navigate }">
       <button class="btn btn-warning" @click="navigate" role="link">
-        <i class="bi-link"></i> Перейти в корзину
+        <i class="bi-link"></i> {{ get_collection }}
       </button>
       </router-link>
 
 
     </div>
+
+    <!-- добавить товар -->
     <div v-if="hide">
       <!-- <form action="/sendProduct" method="POST" enctype="multipart/form-data"> -->
       <form method="POST">
@@ -51,6 +55,7 @@
       </form>
     </div>
     <!-- {{currentPage}} -->
+    <!-- список товаров -->
     <table class="table table-striped table-hover">
       <thead>
         <tr>
@@ -80,6 +85,10 @@
                   <input class="form-control mb-1" type="text" v-if="element.editmode" v-model="element.description">
                   <label v-if="element.editmode">{{ temp }}</label>
                   <input type="number" class="form-control mb-1" v-model="element.price" v-if="element.editmode">
+                  <div v-if="element.editmode" class="product-description">Изображение</div>
+                  <input type="file" :id="element.id" class="form-control mb-1" v-if="element.editmode">
+                  
+                  
                   <div class="flex-grow-1 mb-3"></div>
                   <div class="d-flex justify-content-end">
     
@@ -130,24 +139,69 @@ export default {
       price_product: 0,
       description_product: "",
       file: "",
-      temp: "Степень ахуенности",
-      new_element: "Создать персонажа",
-      my_name: "",
+      // temp: "Цена",
+      // new_element: "Создать товар",
       access: false,
     }
   },
+  props: {
+    temp: String,
+    new_element: String,
+    my_name: String,
+    get_collection: String,
+  },
   computed: { 
+    a() {
+      this.elements.sort(function (a, b) {
+        if (parseInt(a.id) > parseInt(b.id)) {
+          return 1;
+        }
+        if (parseInt(a.id) < parseInt(b.id)) {
+          return -1;
+        }
+        // a должно быть равным b
+        return 0;
+      });
+    }
   },
   async mounted() {
     await this.getProducts()
     await this.getProductsCount()
-    await this.whoami()
     await this.is_access()
+    await this.sorting()
+    // this.='cast '
     // console.log('Компонент примонтирован!');
   },
   methods: {
+    async sorting() {
+      this.elements.sort(function (a, b) {
+        if (parseInt(a.id) > parseInt(b.id)) {
+          return 1;
+        }
+        if (parseInt(a.id) < parseInt(b.id)) {
+          return -1;
+        }
+        // a должно быть равным b
+        return 0;
+      });
+    },
     async t1() {
-      alert('Товар добавлен в корзину')
+      // alert('Товар добавлен в корзину')
+      // Swal.fire({
+      //   title: 'Вы уверены что хотит добавить?',
+      //   showDenyButton: true,
+      //   showCancelButton: true,
+      //   confirmButtonText: 'Добавить',
+      //   denyButtonText: `Don't save`,
+      // }).then((result) => {
+      //   /* Read more about isConfirmed, isDenied below */
+      //   if (result.isConfirmed) {
+      //     Swal.fire('Saved!', '', 'success')
+      //   } else if (result.isDenied) {
+      //     Swal.fire('Changes are not saved', '', 'info')
+      //   }
+      // })
+      Swal.fire('Товар добавлен в корзину!')
     },
     async uploadFile(e) {
       const files = e.target.files
@@ -200,7 +254,7 @@ export default {
 
       // const files = e.target.files // работает с @change=""
       // const data = new FormData()
-      let input = document.querySelector('input[type="file"]')
+      let input = document.getElementById('Avatar')
       formData.append('file', input.files[0])
       // this.file = this.$refs.file.files[0]
       // formData.append('file', this.file)
@@ -231,6 +285,7 @@ export default {
       // let price = document.getElementsByName("price").Value
 
       this.elements = await response.json();
+
       await this.getProductsCount()
 
 
@@ -248,20 +303,44 @@ export default {
     },
     async updateProduct(element) {
       element.editmode=false
-      const response = await fetch('/updaterec', {
+
+      let formData = new FormData()
+      let input = document.getElementById(element.id)
+      formData.append('file', input.files[0])
+      formData.append('name', element.name)
+      formData.append('description', element.description)
+      formData.append('price', element.price)
+      formData.append('id', element.id)
+      console.log('element.id: ', element.id)
+
+      const response = await fetch(`/updaterec?p=${this.currentPage}&limit=${productsPerPage}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          // 'Content-Type': 'application/json'
+          // 'Content-Type': 'multipart/form-data'
         },
-        body: JSON.stringify({
-          id: element.id,
-          name: element.name,
-          description: element.description,
-          price: element.price
-        })
+        // body: JSON.stringify({
+        //   id: element.id,
+        //   name: element.name,
+        //   description: element.description,
+        //   price: element.price
+        // })
+        body: formData
 
       })
-      
+
+      this.elements = await response.json();
+      this.elements.sort(function (a, b) {
+        if (parseInt(a.id) > parseInt(b.id)) {
+          return 1;
+        }
+        if (parseInt(a.id) < parseInt(b.id)) {
+          return -1;
+        }
+        // a должно быть равным b
+        return 0;
+      });
+      await this.getProductsCount()
     },
     async delProduct(element) {
       this.elements.splice(this.elements.indexOf(element), 1)
@@ -344,13 +423,6 @@ export default {
       this.name_product=""
       this.description_product=""
       document.querySelector('input[type=file]').value = "";
-    },
-    async whoami() {
-      const response = await fetch("/whoami", {
-        method: "GET"
-      })
-
-      this.my_name = await response.json()
     },
     async is_access() {
       const response = await fetch("/is_access", {

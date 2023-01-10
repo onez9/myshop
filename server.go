@@ -230,6 +230,7 @@ func clear_image() {
 
 	os.Chdir(path2)
 }
+
 func remove(slice []Product, index string) []Product {
 	for i, product := range slice {
 		if product.Name == index {
@@ -599,24 +600,6 @@ func main() {
 
 		fmt.Println(page, limit)
 		return c.JSON(http.StatusOK, productsPage)
-		/*
-			json_map := make(map[string]interface{})
-			err := json.NewDecoder(c.Request().Body).Decode(&json_map)
-			if err != nil {
-				return err
-			}
-
-			fmt.Println(json_map)
-			name := json_map["name"].(string)
-			description := json_map["description"].(string)
-			price := json_map["price"].(float64)
-
-		*/
-		// return c.JSON(http.StatusOK, "OK")
-
-		// return c.Redirect(http.StatusOK, "/sendProduct")
-		//return c.Redirect(http.StatusFound, "/products")
-		// return c.JSON(http.StatusOK, products)
 	})
 
 	e.POST("/addtocart", func(c echo.Context) error {
@@ -652,75 +635,6 @@ func main() {
 
 		return c.JSON(http.StatusOK, "OK")
 	})
-	// для post с multipart/form-data работает норм - перезагрузка с использованием button с submit
-	// e.POST("/sendProduct", func(c echo.Context) error {
-	// 	// читаем данные из формы
-	// 	fmt.Println(c)
-	// 	name := c.FormValue("name")
-	// 	description := c.FormValue("description")
-	// 	price, err := strconv.Atoi(c.FormValue("price"))
-	// 	fmt.Println(name, description, price)
-	// 	if err != nil {
-	// 		fmt.Println("Произошла ошибка с ковертацией price!")
-	// 		return err
-	// 	}
-	// 	file, err := c.FormFile("file")
-	// 	if err != nil {
-	// 		fmt.Println("тут ошибка 1")
-	// 		return err
-	// 	}
-	// 	src, err := file.Open()
-	// 	if err != nil {
-	// 		fmt.Println("тут ошибка 2")
-	// 		return err
-	// 	}
-	// 	defer src.Close()
-	// 	// imgpath := fmt.Sprintf("public/assets/img/%v", file.Filename)
-	// 	// fmt.Printf(imgpath)
-	// 	dst, err := os.Create(fmt.Sprintf("public/assets/img/%v", file.Filename))
-	// 	if err != nil {
-	// 		fmt.Println("тут ошибка 3")
-	// 		return err
-	// 	}
-	// 	defer dst.Close()
-	// 	//Copy
-	// 	if _, err = io.Copy(dst, src); err != nil {
-	// 		fmt.Println("тут ошибка 4")
-	// 		return err
-	// 	}
-	// 	// тут мы добавляем в базу данных нужную инфу
-	// 	stmt, err := db.Prepare(`INSERT INTO products(name_product,description_product,price,imgpath)Values($1,$2,$3,$4)`)
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// 	imgpath := fmt.Sprintf("assets/img/%v", file.Filename)
-	// 	res, err := stmt.Exec(name, description, price, imgpath)
-	// 	rowCnt, err := res.RowsAffected()
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// 	log.Printf("Добавлено %d\n", rowCnt)
-	// 	// а это для vue шки
-	// 	fmt.Printf("name: %v\ndescription: %v\nprice: %v\n", name, description, price)
-	// 	products = append(products, Product{
-	// 		Name:        name,
-	// 		Description: description,
-	// 		Price:       price,
-	// 		ImgPath:     imgpath,
-	// 	})
-	// 	/*
-	// 		json_map := make(map[string]interface{})
-	// 		err := json.NewDecoder(c.Request().Body).Decode(&json_map)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 		fmt.Println(json_map)
-	// 		name := json_map["name"].(string)
-	// 		description := json_map["description"].(string)
-	// 		price := json_map["price"].(float64)
-	// 	*/
-	// 	// return c.JSON(http.StatusOK, "OK")
-	// 	// return c.Redirect(http.StatusOK, "/sendProduct")
 	// 	return c.Redirect(http.StatusFound, "/products")
 	// })
 	e.POST("/t2", func(c echo.Context) error {
@@ -880,26 +794,110 @@ func main() {
 	})
 
 	e.POST("/updaterec", func(c echo.Context) error {
-		json_map := make(map[string]interface{})
-		err := json.NewDecoder(c.Request().Body).Decode(&json_map)
+		// читаем данные из формы
+		fmt.Println(c)
+		id, err := strconv.Atoi(c.FormValue("id"))
 		if err != nil {
+			fmt.Println("Произошла ошибка с ковертацией id!")
 			return err
 		}
-		id := json_map["id"].(float64)
-		name := json_map["name"].(string)
-		description := json_map["description"].(string)
-		price := json_map["price"].(float64)
-		// удаление записи из бд
-		stmt, err := db.Prepare(`update products set name_product=$1, description_product=$2, price=$3 where id=$4`)
+		name := c.FormValue("name")
+		description := c.FormValue("description")
+		price, err := strconv.Atoi(c.FormValue("price"))
+		fmt.Println(id, name, description, price)
+		if err != nil {
+			fmt.Println("Произошла ошибка с ковертацией price!")
+			return err
+		}
+
+		fdef := true
+		var imgpath string
+		var sql string
+
+		file, err := c.FormFile("file")
+		if err != nil {
+			fmt.Println("файл не загружен, отсутсвует, другие ошибки с файлом")
+			fdef = false
+			//return err
+		}
+
+		if fdef {
+			src, err := file.Open()
+			if err != nil {
+				fmt.Println("тут ошибка 2")
+				return err
+			}
+			defer src.Close()
+
+			// imgpath := fmt.Sprintf("public/assets/img/%v", file.Filename)
+			// fmt.Printf(imgpath)
+
+			chunks := strings.Split(file.Filename, ".")
+			ext := chunks[len(chunks)-1]
+			filename := fmt.Sprintf("%v.%v", uuid.New().String(), ext)
+			dst, err := os.Create(fmt.Sprintf("public/assets/img/%v", filename))
+			if err != nil {
+				fmt.Println("тут ошибка 3")
+				return err
+
+			}
+			defer dst.Close()
+			//Copy
+			if _, err = io.Copy(dst, src); err != nil {
+				fmt.Println("тут ошибка 4")
+				return err
+
+			}
+
+			imgpath = fmt.Sprintf("assets/img/%v", filename)
+			sql = `update products set name_product=$1, description_product=$2, price=$3, imgpath=$4 where id=$5`
+			stmt, err := db.Prepare(sql)
+			if err != nil {
+				log.Fatal(err)
+			}
+			res, err := stmt.Exec(name, description, price, imgpath, id) // тут мы записываем данные в БД
+			if err != nil {
+				log.Fatal(err)
+			}
+			rowCnt, err := res.RowsAffected()
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println("Обновлено строк: ", rowCnt)
+		} else {
+
+			sql = `update products set name_product=$1, description_product=$2, price=$3 where id=$4`
+			stmt, err := db.Prepare(sql)
+			if err != nil {
+				log.Fatal(err)
+			}
+			res, err := stmt.Exec(name, description, price, id) // тут мы записываем данные в БД
+			rowCnt, err := res.RowsAffected()
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println("Обновлено строк: ", rowCnt)
+		}
+
+		loadFromDB()
+
+		page, err := strconv.Atoi(c.QueryParam("p"))
 		if err != nil {
 			log.Fatal(err)
 		}
-		res, err := stmt.Exec(name, description, price, id) // тут мы записываем данные в БД
-		rowCnt, err := res.RowsAffected()
+		limit, err := strconv.Atoi(c.QueryParam("limit"))
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println("Обновлено строк: ", rowCnt)
+
+		fromIndex := page * limit     // начальный индекс товара
+		toIndex := page*limit + limit // конечный индекс товара
+		if toIndex > len(products) {
+			toIndex = len(products)
+		}
+		productsPage := products[fromIndex:toIndex]
+
+		fmt.Println(page, limit)
 
 		// Обновляем массив для vue-шек
 		for i, item := range products {
@@ -912,8 +910,10 @@ func main() {
 			}
 		}
 
-		return c.JSON(http.StatusOK, "OK")
+		return c.JSON(http.StatusOK, productsPage)
+		// return c.JSON(http.StatusOK, "OK")
 	})
+
 	e.POST("/delrec", func(c echo.Context) error {
 		name := c.QueryParam("name")
 

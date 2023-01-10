@@ -50,9 +50,12 @@ export default {
     return {
       // основные элементы корзины
       cart_items: [],
-      temp: "Пиздатость"
+      // temp: "Цена"
       
     }
+  },
+  props: {
+    temp: String,
   },
   computed: { 
   },

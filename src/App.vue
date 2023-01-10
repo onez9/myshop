@@ -9,7 +9,7 @@ import { RouterLink, RouterView } from 'vue-router'
       <div class="container-fluid">
         <a class="navbar-brand" href="#">
           <i class="bi-diagram-3-fill"></i>
-          Мой сайт
+          {{ name_site }}
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
@@ -52,8 +52,13 @@ import { RouterLink, RouterView } from 'vue-router'
     </nav> 
 
   </header>
-  <main class="container">
-    <RouterView /> <!--Именно в этом месте vue-router будет загружать компоненты в соответствие с навигацией-->
+  <main class="container" >
+    <RouterView 
+    :get_collection="get_collection" 
+    :temp="temp" 
+    :new_element="new_element" 
+    :my_name="my_name"/> 
+    <!--Именно в этом месте vue-router будет загружать компоненты в соответствие с навигацией-->
   </main>
   <footer>
   </footer>
@@ -71,8 +76,12 @@ export default {
       password: "",
       pass1: "",
       pass2: "",
-      elements: "Песонажи",
+      elements: "Персонажи",
       my_name: "",
+      temp: "Рейтинг",
+      new_element: "Создать песонажа",
+      get_collection: "Перейти в коллекцию",
+      name_site: "awesome art"
     }
   },
   async mounted() {
@@ -85,6 +94,7 @@ export default {
       })
 
       this.my_name = await response.json()
+      // this.my_name="666"
     },
     async logout() {
       this.my_name = ""

@@ -24,21 +24,23 @@ import Swal from 'sweetalert2'
       <!-- <button @click="" class="btn btn-warning"><i class="bi-plus-square"></i> Перейти в корзину</button> -->
       <!-- {{ my_name }} -->
       <router-link v-if="my_name!=''" to="/cart" customv-slot="{ navigate }">
-      <button class="btn btn-warning" @click="navigate" role="link">
-        <i class="bi-link"></i> {{ get_collection }}
-      </button>
+        <button class="btn btn-warning" @click="navigate" role="link">
+          <i class="bi-link"></i> {{ get_collection }}
+        </button>
       </router-link>
 
 
     </div>
 
+
+
     <!-- добавить товар -->
     <div v-if="hide">
       <!-- <form action="/sendProduct" method="POST" enctype="multipart/form-data"> -->
-      <form method="POST">
-        <label for="name">Название: {{ name_product }}</label>
+      <form method="POST" class="w-50">
+        <label for="name">Название: </label>
         <input name="name" v-model="name_product" type="text" id="name" class="form-control" required>
-        <label for="description">Описание: {{ description_product }}</label>
+        <label for="description">Описание: </label>
         <input name="description" v-model="description_product" type="text" id="description" class="form-control" required>
         <label for="price">{{ temp }}:</label>
         <input name="price" v-model.number="price_product" type="number" min="100" max="1000" id="price" class="form-control mb-1" required>
@@ -48,12 +50,14 @@ import Swal from 'sweetalert2'
         <!-- <label for="name">name</label> -->
         <!-- <input type="text" id="name" class="form-control"> -->
         <div class="d-flex mt-3 mb-3">
-          <button @click="sendProduct" type="button" class="btn btn-success btn-sm me-1"><i class="bi-plus-square"></i> Добавить</button>
-          <button @click="canceling" class="btn btn-warning btn-sm me-1"><i class="bi-x-square"></i> Отмена</button>
-          <button @click="ending" class="btn btn-danger btn-sm"><i class="bi-badge-cc"></i> Завершить</button>
+          <button @click="sendProduct" type="button" class="btn btn-success  me-1"><i class="bi-plus-square"></i> Создать</button>
+          <button @click="canceling" class="btn btn-warning  me-1"><i class="bi-x-square"></i> Отчистить ввод</button>
+          <button @click="ending" class="btn btn-danger "><i class="bi-badge-cc"></i> Отчистить ввод и закрыть</button>
         </div>
       </form>
     </div>
+
+
     <!-- {{currentPage}} -->
     <!-- список товаров -->
     <table class="table table-striped table-hover">
@@ -95,19 +99,34 @@ import Swal from 'sweetalert2'
     
                     <div v-if="!element.editmode" class="product-price">{{ temp }}: <strong>{{ element.price }}</strong></div>
     
-                    <button v-if="!element.editmode && access" @click="enableEditMode(element)" class="btn btn-info btn-sm me-1" title="Выполнить какие-нибудь изменения">
+                    <button v-if="!element.editmode && access" 
+                      @click="enableEditMode(element)" 
+                      class="btn  btn-success me-1" 
+                      title="Выполнить какие-нибудь изменения">
                       <i class="bi bi-pen"></i> <span class="d-none d-md-inline"> Редактировать</span>
                     </button>
-                    <button v-if="element.editmode && access" @click="updateProduct(element)" class="btn btn-success btn-sm me-1" title="Выполнить какие-нибудь изменения">
+                    <button v-if="element.editmode && access" 
+                      @click="updateProduct(element)" 
+                      class="btn btn-success  me-1" 
+                      title="Выполнить какие-нибудь изменения">
                       <i class="bi-journals"></i> <span class="d-none d-md-inline"> Сохранить</span>
                     </button>
-                    <button v-if="access" @click="delProduct(element)" class="btn btn-danger btn-sm me-1" title="Удалить">
+                    <button v-if="access" 
+                      @click="delProduct(element)" 
+                      class="btn btn-danger  me-1" 
+                      title="Удалить">
                       <i class="bi-x-circle"></i> <span class="d-none d-md-inline">Удалить</span>
                     </button>
-                    <button v-if="my_name!=''" @click="addToCart(element)" class="btn btn-warning btn-sm me-1" title="В корзину">
+                    <button v-if="my_name!=''" 
+                      @click="addToCart(element)" 
+                      class="btn btn-warning  me-1" 
+                      title="В корзину">
                       <i class="bi-cart"></i> <span class="d-none d-md-inline">В корзину</span>
                     </button>
-                    <button v-if="element.editmode" @click="disableEditMode(element)" class="btn btn-secondary btn-sm" title="Отменить">
+                    <button v-if="element.editmode" 
+                      @click="disableEditMode(element)" 
+                      class="btn btn-secondary " 
+                      title="Отменить">
                       <i class="bi-x-octagon"></i> <span class="d-none d-md-inline"> Отмена</span>
                     </button>
                   </div>
@@ -118,6 +137,20 @@ import Swal from 'sweetalert2'
         </tr>
       </tbody>
     </table>
+
+    <!-- навигация по страницам -->
+    <div class="mt-3 d-flex justify-content-center">
+      <nav aria-label="Page navigation mt-1 example">
+        <ul class="pagination">
+          <li v-if="currentPage>0" class="page-item"><a class="page-link" href="#" @click="changePage(currentPage-1)">Пред</a></li>
+          <li :class="{'page-item': true, 'active': (page-1==currentPage)}" v-for="page in totalpages" :key="page">
+            <a class="page-link" @click="changePage(page-1)" href="#">{{ page }}</a>
+          </li>
+          <li v-if="currentPage<totalpages-1" class="page-item"><a class="page-link" href="#" @click="changePage(currentPage+1)">След</a></li>
+        </ul>
+      </nav>
+    </div>
+
   </div>
 </template>
 

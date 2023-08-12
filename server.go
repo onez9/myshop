@@ -28,6 +28,10 @@ type Product struct {
 	ImgPath     string `json:"imgpath"`
 }
 
+type Item struct {
+	ImgPath string `json:"name"`
+}
+
 // RedirectConfig struct {
 //   // Skipper defines a function to skip middleware.
 //   Skipper Skipper
@@ -53,6 +57,7 @@ var db, err = sql.Open("postgres", connStr)
 // var products = []Product
 var products []Product
 var cart_products []Product
+var items []Item
 
 func sendDataToDBpostgres() {
 
@@ -163,6 +168,20 @@ func fillProductsToAqrray() {
 		ImgPath:     "assets/img/11.jpg",
 	})
 }
+
+func fillItems() {
+	items = append(items, Item{
+		ImgPath: "assets/img1/1.jpg",
+	})
+	items = append(items, Item{
+		ImgPath: "assets/img1/1.jpg",
+	})
+	items = append(items, Item{
+		ImgPath: "assets/img1/1.jpg",
+	})
+
+}
+
 func encrtyptPasswords(password string) string {
 	h := sha256.New()
 	h.Write([]byte(password))
@@ -226,6 +245,30 @@ func clear_image() {
 			os.Remove(file.Name())
 			fmt.Println(index, file.Name())
 		}
+	}
+
+	os.Chdir(path2)
+}
+
+func show_files() {
+	path1 := "/home/zakhar/Code/web/souvenir_shop/public/assets/img1"
+	path2 := "/home/zakhar/Code/web/souvenir_shop/"
+
+	os.Chdir(path1)
+
+	files, err := os.ReadDir(path1)
+	if err != nil {
+		fmt.Println(err)
+	}
+	for index, file := range files {
+		// if len([]rune(strings.Split(file.Name(), ".")[0])) == 36 {
+		// os.Remove(file.Name())
+
+		items = append(items, Item{
+			ImgPath: fmt.Sprintf("assets/img1/%s", file.Name()),
+		})
+		fmt.Println(index, fmt.Sprintf("assets/img1/%s", file.Name()))
+		// }
 	}
 
 	os.Chdir(path2)
@@ -305,6 +348,12 @@ func main() {
 	// 	return c.NoContent(http.StatusOK)
 	// })
 
+	e.POST("/getg", func(c echo.Context) error {
+		// fillItems()
+		show_files()
+		return c.JSON(http.StatusOK, items)
+	})
+
 	e.POST("/is_access", func(c echo.Context) error {
 		stmt, err := db.Prepare(`select sudo from users where email=$1`)
 		if err != nil {
@@ -325,7 +374,7 @@ func main() {
 				log.Fatal(err)
 			}
 		}
-
+		yes_or_no = true // тут добавил для избавления от дырявой авторизации
 		return c.JSON(http.StatusOK, yes_or_no)
 	})
 
@@ -381,7 +430,7 @@ func main() {
 
 	})
 
-	// Загрузка при старте пользовательской корзины с продуктами картинками :)
+	// Загрузка при старте пользовательской корзины с продуктами картинками :
 	e.GET("/getcartitems", func(c echo.Context) error {
 		sess, _ := session.Get("session", c)
 		fmt.Println("session(addtocart) id: ", sess.Values["id"])
@@ -453,12 +502,14 @@ func main() {
 			"a3": 123,
 		})
 	})
+
 	e.GET("/", func(c echo.Context) error {
 		// name := c.QueryParam("name")
 		// fmt.Println(name)
 		// type H map[string]interface{}
 		return c.Redirect(http.StatusFound, "/home")
 	})
+
 	e.POST("/addUser", func(c echo.Context) error {
 		firstname := c.FormValue("name")
 		lastname := c.FormValue("description")
@@ -469,6 +520,7 @@ func main() {
 		if password1 != password2 {
 			return c.Redirect(http.StatusFound, "/reg")
 		}
+
 		password := encrtyptPasswords(password1)
 		if err != nil {
 			fmt.Println("Произошла ошибка с ковертацией price!")

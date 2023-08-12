@@ -28,6 +28,10 @@ import { RouterLink, RouterView } from 'vue-router'
               <!-- <a class="nav-link" href="about.html"><i class="bi-file-earmark-person"></i> О нас</a> -->
               <router-link class="nav-link" to="/about"><i class="bi-person-circle"></i> О нас</router-link>
             </li>
+            <li class="nav-item">
+              <!-- <a class="nav-link" href="about.html"><i class="bi-file-earmark-person"></i> О нас</a> -->
+              <router-link class="nav-link" to="/girls"><i class="bi-person-circle"></i> Бабы</router-link>
+            </li>
 
 
           </ul>
@@ -76,12 +80,12 @@ export default {
       password: "",
       pass1: "",
       pass2: "",
-      elements: "Персонажи",
+      elements: "Товары",
       my_name: "",
-      temp: "Рейтинг",
-      new_element: "Создать песонажа",
-      get_collection: "Перейти в коллекцию",
-      name_site: "awesome art"
+      temp: "Важность",
+      new_element: "Добавить задачу",
+      get_collection: "Моя корзина",
+      name_site: "Сувенирная"
     }
   },
   async mounted() {

@@ -1,5 +1,9 @@
-@import "../../public/assets/bootstrap/css/bootstrap.css";
-@import "../../public/assets/bootstrap-icons/bootstrap-icons.css";
+@import "../../public/assets/bootstrap/dist/css/bootstrap.css";
+@import "../../public/assets/bootstrap-icons/font/bootstrap-icons.css";
+
+
+
+
 
 .avatar {
     border-radius: 50%;

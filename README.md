@@ -1,10 +1,12 @@
 
+
+Небольшой проект из вуза
+
 ##### Установка
 ```bash
+git clone https://github.com/onez9/myshop
+cd myshop
 npm i
-
-
-
 
 ```
 
